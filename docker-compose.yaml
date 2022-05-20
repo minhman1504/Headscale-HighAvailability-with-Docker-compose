@@ -1,0 +1,50 @@
+version: '3.0'
+services :
+  postgresql-db:
+    container_name: postgresql-db
+    image: postgres:10-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER:      user1
+      POSTGRES_PASSWORD:  user1234
+      POSTGRES_DB:        app-database
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+  headscale-01:
+    container_name: headscale-01
+    image: headscale/headscale:latest-debug
+    volumes:
+      - ./headscale/:/etc/headscale/
+    command: headscale serve 
+    depends_on:
+      - postgresql-db
+
+  headscale-02:
+    container_name: headscale-02
+    image: headscale/headscale:latest-debug
+    volumes:
+      - ./headscale/:/etc/headscale/
+    command: headscale serve
+    depends_on:
+      - postgresql-db
+
+  headscale-03:
+    container_name: headscale-03
+    image: headscale/headscale:latest-debug
+    volumes:
+      - ./headscale/:/etc/headscale/
+    command: headscale serve
+    depends_on:
+      - postgresql-db
+
+  nginx:
+    container_name: nginx-loadbalancer
+    image: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:8080"
+    depends_on:
+      - headscale-01     # at least 1 headscale container
